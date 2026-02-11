@@ -41,10 +41,16 @@
         .qr-item {
             transition: all 0.3s ease;
             border-left: 4px solid #667eea;
+            padding: 15px;
         }
         .qr-item:hover {
             transform: translateX(5px);
             background-color: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .qr-item img.img-thumbnail {
+            border: 2px solid #667eea;
+            padding: 3px;
         }
         .badge-status {
             padding: 8px 15px;

@@ -257,7 +257,7 @@ function markAsUsed() {
 function listQRCodes() {
     global $conn;
     
-    $result = $conn->query("SELECT id, code, name, description, scanned_at, is_used, created_at FROM qr_codes ORDER BY created_at DESC");
+    $result = $conn->query("SELECT id, code, name, description, qr_image, scanned_at, is_used, created_at FROM qr_codes ORDER BY created_at DESC");
     
     $data = [];
     while($row = $result->fetch_assoc()) {

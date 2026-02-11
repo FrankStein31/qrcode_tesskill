@@ -47,7 +47,14 @@ document.getElementById('registerForm').addEventListener('submit', async functio
                 <div class="alert alert-success">
                     <h5><i class="bi bi-check-circle"></i> QR Code berhasil ${message}!</h5>
                     <p>Code: <strong>${result.code}</strong></p>
-                    ${result.qr_image ? `<img src="${result.qr_image}" alt="QR Code" class="img-fluid qr-image-preview">` : ''}
+                    ${result.qr_image ? `
+                        <img src="${result.qr_image}" alt="QR Code" class="img-fluid qr-image-preview">
+                        <div class="mt-3">
+                            <a href="${result.qr_image}" download="${result.code}.png" class="btn btn-success">
+                                <i class="bi bi-download"></i> Download QR Code
+                            </a>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             resetForm();
@@ -294,6 +301,11 @@ async function deleteQRCode(id, name) {
 
 // View QR Code Detail
 function viewQRCode(id, code, name, description, qrImage, scannedAt, isUsed) {
+    // Debug log
+    console.log('viewQRCode called with:', {
+        id, code, name, description, qrImage, scannedAt, isUsed
+    });
+    
     // Handle undefined/null values
     code = code || '';
     name = name || 'N/A';
@@ -301,11 +313,16 @@ function viewQRCode(id, code, name, description, qrImage, scannedAt, isUsed) {
     qrImage = qrImage || '';
     scannedAt = scannedAt || '';
     
+    // Check if qrImage is valid
+    if(!qrImage || qrImage === '' || qrImage === 'undefined' || qrImage === 'null') {
+        console.error('QR Image not valid:', qrImage);
+    }
+    
     const status = isUsed == 1 ? 
-        '<span class="badge bg-warning">Digunakan (40)</span>' : 
+        '<span class="badge bg-warning">Digunakan</span>' : 
         scannedAt ? 
-        '<span class="badge bg-success">Di-scan (30)</span>' :
-        '<span class="badge bg-secondary">Belum Di-scan (30)</span>';
+        '<span class="badge bg-success">Di-scan</span>' :
+        '<span class="badge bg-secondary">Belum Di-scan</span>';
     
     const modal = `
         <div class="modal fade" id="qrModal" tabindex="-1">
@@ -316,12 +333,15 @@ function viewQRCode(id, code, name, description, qrImage, scannedAt, isUsed) {
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-center">
-                        ${qrImage ? `<img src="${qrImage}" alt="QR Code" class="img-fluid mb-3" style="max-width: 300px;">` : '<p class="text-muted">QR Code image not available</p>'}
+                        ${qrImage && qrImage !== '' && qrImage !== 'undefined' && qrImage !== 'null' ? 
+                            `<img src="${qrImage}" alt="QR Code" class="img-fluid mb-3" style="max-width: 300px;" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <p class="text-muted" style="display:none;">Gagal memuat gambar QR Code</p>` : 
+                            '<p class="text-muted">QR Code image not available</p>'}
                         <h4>${name}</h4>
                         <p class="text-muted">${description}</p>
                         <p><strong>Code:</strong> ${code}</p>
                         <p><strong>Status:</strong> ${status}</p>
-                        ${scannedAt && scannedAt !== 'null' ? `<p><strong>Waktu Scan:</strong> ${scannedAt}</p>` : ''}
+                        ${scannedAt && scannedAt !== 'null' && scannedAt !== '' ? `<p><strong>Waktu Scan:</strong> ${scannedAt}</p>` : ''}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -357,6 +377,9 @@ async function loadQRList() {
             let html = '<div class="list-group">';
             
             result.data.forEach(qr => {
+                // Debug: Log the actual QR data
+                console.log('QR Data from API:', qr);
+                
                 const statusBadge = qr.is_used == 1 ? 
                     '<span class="badge bg-warning badge-status">Digunakan</span>' : 
                     qr.scanned_at ? 
@@ -370,24 +393,40 @@ async function loadQRList() {
                 const safeImage = qr.qr_image || '';
                 const safeScannedAt = qr.scanned_at || '';
                 
+                // Debug: Check the safe values
+                console.log('Safe values:', { safeName, safeDescription, safeCode, safeImage, safeScannedAt });
+                
                 html += `
                     <div class="list-group-item qr-item mb-2">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1"><i class="bi bi-qr-code"></i> ${qr.name}</h6>
-                                <p class="mb-1 text-muted small">${qr.description || '-'}</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-key"></i> Code: ${qr.code}
-                                </small>
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <div class="me-3">
+                                    ${safeImage ? `<img src="${safeImage}" alt="QR Code" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">` : '<div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: 5px;"><i class="bi bi-qr-code"></i></div>'}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1"><i class="bi bi-tag"></i> ${qr.name}</h6>
+                                    <p class="mb-1 text-muted small">${qr.description || '-'}</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-key"></i> Code: ${qr.code}
+                                    </small>
+                                </div>
                             </div>
                             <div class="text-end ms-3">
                                 ${statusBadge}
                                 <br>
                                 <small class="text-muted d-block mb-2">${qr.created_at}</small>
                                 <div class="qr-actions">
-                                    <button class="btn btn-sm btn-warning btn-action" onclick='editQRCode(${qr.id}, "${safeName}", "${safeDescription}")' title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
+                                    ${!qr.scanned_at && qr.is_used == 0 ? `
+                                        <a href="${safeImage}" download="${safeCode}.png" class="btn btn-sm btn-success btn-action" title="Download">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-info btn-action" onclick='viewQRCode(${qr.id}, "${safeCode}", "${safeName}", "${safeDescription}", "${safeImage}", "${safeScannedAt}", ${qr.is_used})' title="Lihat">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning btn-action" onclick='editQRCode(${qr.id}, "${safeName}", "${safeDescription}")' title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    ` : ''}
                                     <button class="btn btn-sm btn-danger btn-action" onclick='deleteQRCode(${qr.id}, "${safeName}")' title="Hapus">
                                         <i class="bi bi-trash"></i>
                                     </button>
