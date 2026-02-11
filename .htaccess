@@ -1,0 +1,21 @@
+RewriteEngine On
+RewriteBase /qr_code/
+
+# Allow access to directories
+Options +Indexes
+
+# Set default index file
+DirectoryIndex index.php index.html
+
+# Protect config file
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Enable CORS for API
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>

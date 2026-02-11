@@ -1,0 +1,14 @@
+{
+    "name": "qrcode/system",
+    "description": "QR Code Management System",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "endroid/qr-code": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
