@@ -75,6 +75,29 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 function initScanner() {
     html5QrCode = new Html5Qrcode("reader");
     
+    // Check if accessing via HTTPS or localhost
+    const isSecureContext = window.isSecureContext;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (!isSecureContext && !isLocalhost) {
+        document.getElementById('reader').innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="bi bi-exclamation-triangle"></i> Kamera Memerlukan HTTPS</h5>
+                <p><strong>Browser memblokir akses kamera karena koneksi tidak aman.</strong></p>
+                <hr>
+                <p class="mb-2"><strong>Solusi untuk HP/Mobile:</strong></p>
+                <ol class="text-start">
+                    <li>Gunakan HTTPS atau aktifkan SSL di Laragon</li>
+                    <li>Atau gunakan aplikasi berbasis file (bukan browser)</li>
+                    <li>Atau test di localhost dari PC server</li>
+                </ol>
+                <hr>
+                <p class="mb-0"><small><i class="bi bi-info-circle"></i> Alternatif: Upload foto QR Code secara manual</small></p>
+            </div>
+        `;
+        return;
+    }
+    
     html5QrCode.start(
         { facingMode: "environment" },
         {
@@ -85,12 +108,62 @@ function initScanner() {
         onScanError
     ).catch(err => {
         console.error("Camera error:", err);
-        document.getElementById('reader').innerHTML = `
-            <div class="alert alert-warning">
-                <i class="bi bi-camera-video-off"></i> Tidak dapat mengakses kamera. 
-                Pastikan Anda memberikan izin kamera.
-            </div>
-        `;
+        
+        let errorMessage = '';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            errorMessage = `
+                <div class="alert alert-warning">
+                    <h5><i class="bi bi-camera-video-off"></i> Izin Kamera Ditolak</h5>
+                    <p><strong>Anda belum memberikan izin akses kamera.</strong></p>
+                    <hr>
+                    <p class="mb-2"><strong>Cara mengaktifkan:</strong></p>
+                    <ol class="text-start">
+                        <li><strong>Android Chrome:</strong> Klik ikon gembok di address bar → Izinkan kamera</li>
+                        <li><strong>iPhone Safari:</strong> Settings → Safari → Camera → Allow</li>
+                        <li><strong>Desktop:</strong> Klik ikon kamera di address bar → Allow</li>
+                    </ol>
+                    <hr>
+                    <button class="btn btn-primary btn-sm" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh & Coba Lagi
+                    </button>
+                </div>
+            `;
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            errorMessage = `
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-camera-video-off"></i> Kamera Tidak Ditemukan</h5>
+                    <p>Perangkat Anda tidak memiliki kamera atau kamera sedang digunakan aplikasi lain.</p>
+                </div>
+            `;
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+            errorMessage = `
+                <div class="alert alert-warning">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Kamera Sedang Digunakan</h5>
+                    <p>Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi tersebut dan refresh halaman ini.</p>
+                    <hr>
+                    <button class="btn btn-primary btn-sm" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Halaman
+                    </button>
+                </div>
+            `;
+        } else {
+            errorMessage = `
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Error Kamera</h5>
+                    <p><strong>Tidak dapat mengakses kamera.</strong></p>
+                    <p class="mb-0"><small>Error: ${err.message || err.name || 'Unknown error'}</small></p>
+                    <hr>
+                    <p class="mb-2"><strong>Pastikan:</strong></p>
+                    <ul class="text-start">
+                        <li>Browser memiliki izin akses kamera</li>
+                        <li>Koneksi menggunakan HTTPS (untuk IP selain localhost)</li>
+                        <li>Kamera tidak sedang digunakan aplikasi lain</li>
+                    </ul>
+                </div>
+            `;
+        }
+        
+        document.getElementById('reader').innerHTML = errorMessage;
     });
 }
 
