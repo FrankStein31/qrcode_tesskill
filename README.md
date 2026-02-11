@@ -1,19 +1,19 @@
 # Sistem QR Code
 
-Website sederhana untuk mengelola dan scan QR Code dengan fitur lengkap sesuai requirement.
+Website sederhana untuk mengelola dan scan QR Code (Silahkan Dikembangkan Lebih Lanjut)
 
 ## Fitur
 
-### 1. Register QR Code (Nilai: 30)
+### 1. Register QR Code
 - Generate QR Code secara RANDOM
 - Scan menggunakan kamera untuk membaca QR Code
 
 ### 2. Scan QR Code
 - Setelah register berhasil, kamera aktif untuk scan QR Code
 - Setelah berhasil membaca QR Code, QR Code langsung ditandai sebagai "digunakan" (is_used = 1)
-- QR Code yang tidak terdaftar tidak dapat di-scan (Nilai: 30)
+- QR Code yang tidak terdaftar tidak dapat di-scan
 
-### 3. Auto Mark as Used (Nilai: 40)
+### 3. Auto Mark as Used
 - Setelah scan berhasil, QR Code langsung ditandai sebagai "digunakan" di database
 - QR Code yang sudah digunakan tidak dapat digunakan kembali
 - User diminta untuk scan QR Code lain
@@ -78,12 +78,6 @@ $database = 'qr_code_db';
    - User diminta untuk scan QR Code yang lain
    - QR Code yang sama tidak dapat di-scan ulang
 
-## Nilai/Skor Sistem
-
-- **30**: QR Code berhasil terdaftar dan belum di-scan
-- **30**: QR Code tidak terdaftar tidak dapat di-scan
-- **40**: QR Code yang sudah di-scan tidak dapat digunakan kembali
-
 ## Troubleshooting
 
 ### Kamera tidak dapat diakses
@@ -102,4 +96,4 @@ $database = 'qr_code_db';
 
 ## License
 
-MIT License
+Frankie Steinlie
