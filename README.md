@@ -10,11 +10,13 @@ Website sederhana untuk mengelola dan scan QR Code dengan fitur lengkap sesuai r
 
 ### 2. Scan QR Code
 - Setelah register berhasil, kamera aktif untuk scan QR Code
-- Setelah berhasil membaca QR Code, timer countdown 30 detik akan berjalan
-- QR Code yang tidak terdaftar tidak dapat menjalankan timer (Nilai: 30)
+- Setelah berhasil membaca QR Code, QR Code langsung ditandai sebagai "digunakan" (is_used = 1)
+- QR Code yang tidak terdaftar tidak dapat di-scan (Nilai: 30)
 
 ### 3. Auto Mark as Used (Nilai: 40)
-- Setelah countdown timer 30 detik habis, QR Code yang sudah digunakan secara otomatis tidak dapat digunakan kembali
+- Setelah scan berhasil, QR Code langsung ditandai sebagai "digunakan" di database
+- QR Code yang sudah digunakan tidak dapat digunakan kembali
+- User diminta untuk scan QR Code lain
 
 ## Instalasi
 
@@ -69,18 +71,18 @@ $database = 'qr_code_db';
 2. **Scan QR Code**:
    - Izinkan akses kamera
    - Arahkan kamera ke QR Code
-   - Sistem akan otomatis membaca dan memulai timer 30 detik
+   - Sistem akan otomatis membaca dan langsung menandai QR Code sebagai "digunakan"
 
-3. **Timer Countdown**:
-   - Setelah scan berhasil, timer 30 detik akan berjalan
-   - Setelah 30 detik, QR Code otomatis ditandai sebagai "digunakan"
-   - QR Code yang sudah digunakan tidak dapat digunakan lagi
+3. **QR Code Sudah Digunakan**:
+   - Setelah scan berhasil, QR Code langsung tidak dapat digunakan lagi
+   - User diminta untuk scan QR Code yang lain
+   - QR Code yang sama tidak dapat di-scan ulang
 
 ## Nilai/Skor Sistem
 
-- **30**: QR Code berhasil di-scan (timer berjalan)
-- **30**: QR Code tidak terdaftar tidak dapat menjalankan timer
-- **40**: QR Code yang sudah digunakan tidak dapat digunakan kembali
+- **30**: QR Code berhasil terdaftar dan belum di-scan
+- **30**: QR Code tidak terdaftar tidak dapat di-scan
+- **40**: QR Code yang sudah di-scan tidak dapat digunakan kembali
 
 ## Troubleshooting
 

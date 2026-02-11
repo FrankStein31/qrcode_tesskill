@@ -94,21 +94,37 @@ function scanQRCode() {
     if($qrData['is_used'] == 1) {
         echo json_encode([
             'success' => false, 
-            'message' => 'QR Code sudah pernah digunakan. QR Code yang sudah digunakan tidak dapat digunakan kembali (Nilai: 40)'
+            'message' => 'QR Code sudah pernah digunakan. QR Code yang sudah digunakan tidak dapat digunakan kembali'
         ]);
         return;
     }
     
-    // Update scanned_at
+    // Only update scanned_at, DON'T set is_used = 1 yet
+    // is_used will be set to 1 after 30 seconds timer
     $stmt = $conn->prepare("UPDATE qr_codes SET scanned_at = NOW() WHERE id = ?");
     $stmt->bind_param("i", $qrData['id']);
+    
+    if(!$stmt->execute()) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Gagal update scanned_at: ' . $stmt->error
+        ]);
+        return;
+    }
+    
+    // Verify update
+    $stmt = $conn->prepare("SELECT scanned_at FROM qr_codes WHERE id = ?");
+    $stmt->bind_param("i", $qrData['id']);
     $stmt->execute();
+    $checkResult = $stmt->get_result();
+    $updatedData = $checkResult->fetch_assoc();
     
     echo json_encode([
         'success' => true,
         'id' => $qrData['id'],
         'name' => $qrData['name'],
         'description' => $qrData['description'],
+        'scanned_at' => $updatedData['scanned_at'],
         'message' => 'Scan berhasil! Timer 30 detik dimulai.'
     ]);
 }
@@ -119,13 +135,33 @@ function markAsUsed() {
     $data = json_decode(file_get_contents('php://input'), true);
     $id = $data['id'] ?? 0;
     
+    if($id <= 0) {
+        echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
+        return;
+    }
+    
     $stmt = $conn->prepare("UPDATE qr_codes SET is_used = 1 WHERE id = ?");
     $stmt->bind_param("i", $id);
     
     if($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'QR Code ditandai sebagai digunakan']);
+        // Check affected rows
+        if($stmt->affected_rows > 0) {
+            echo json_encode([
+                'success' => true, 
+                'message' => 'QR Code ditandai sebagai digunakan',
+                'affected_rows' => $stmt->affected_rows
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Tidak ada data yang diupdate'
+            ]);
+        }
     } else {
-        echo json_encode(['success' => false, 'message' => 'Gagal mengupdate status']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Gagal mengupdate status: ' . $stmt->error
+        ]);
     }
 }
 

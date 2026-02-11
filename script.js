@@ -74,6 +74,8 @@ async function onScanSuccess(decodedText, decodedResult) {
         return; // Prevent multiple scans during countdown
     }
     
+    console.log('QR Code detected:', decodedText);
+    
     try {
         const response = await fetch('api.php?action=scan', {
             method: 'POST',
@@ -84,6 +86,7 @@ async function onScanSuccess(decodedText, decodedResult) {
         });
         
         const result = await response.json();
+        console.log('Scan result:', result);
         
         if(result.success) {
             currentScannedId = result.id;
@@ -93,12 +96,15 @@ async function onScanSuccess(decodedText, decodedResult) {
                     <h5><i class="bi bi-check-circle"></i> Scan berhasil!</h5>
                     <p><strong>Nama:</strong> ${result.name}</p>
                     <p><strong>Deskripsi:</strong> ${result.description}</p>
-                    <p class="mb-0"><strong>Nilai:</strong> <span class="badge bg-success">30</span></p>
+                    <p><strong>Waktu Scan:</strong> ${result.scanned_at || 'Baru saja'}</p>
                 </div>
             `;
             
+            // Refresh list immediately after scan
+            await loadQRList();
+            
+            // Start countdown timer - after 30 seconds, QR Code will be marked as used
             startCountdown();
-            loadQRList();
         } else {
             document.getElementById('scanResult').innerHTML = `
                 <div class="alert alert-danger">
@@ -108,6 +114,11 @@ async function onScanSuccess(decodedText, decodedResult) {
         }
     } catch(error) {
         console.error('Scan error:', error);
+        document.getElementById('scanResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> Terjadi kesalahan saat scan
+            </div>
+        `;
     }
 }
 
@@ -140,14 +151,18 @@ function updateCountdownDisplay() {
     const percentage = (countdownSeconds / 30) * 100;
     document.getElementById('progressBar').style.width = percentage + '%';
     
-    if(countdownSeconds <= 10) {
-        document.getElementById('progressBar').classList.remove('bg-info');
-        document.getElementById('progressBar').classList.add('bg-warning');
-    }
+    // Reset classes
+    const progressBar = document.getElementById('progressBar');
+    progressBar.classList.remove('bg-warning', 'bg-danger');
     
-    if(countdownSeconds <= 5) {
-        document.getElementById('progressBar').classList.remove('bg-warning');
-        document.getElementById('progressBar').classList.add('bg-danger');
+    if(countdownSeconds <= 10 && countdownSeconds > 5) {
+        progressBar.classList.remove('bg-info');
+        progressBar.classList.add('bg-warning');
+    } else if(countdownSeconds <= 5) {
+        progressBar.classList.remove('bg-info', 'bg-warning');
+        progressBar.classList.add('bg-danger');
+    } else {
+        progressBar.classList.add('bg-info');
     }
 }
 
@@ -157,12 +172,17 @@ function stopCountdown() {
         countdownTimer = null;
     }
     document.getElementById('countdown').style.display = 'none';
-    currentScannedId = null;
+    // Don't reset currentScannedId here, let markAsUsed() handle it
 }
 
-// Mark QR Code as Used
+// Mark QR Code as Used after 30 seconds
 async function markAsUsed() {
-    if(currentScannedId === null) return;
+    if(currentScannedId === null) {
+        console.log('No scanned ID to mark as used');
+        return;
+    }
+    
+    console.log('Timer habis! Marking as used, ID:', currentScannedId);
     
     try {
         const response = await fetch('api.php?action=markUsed', {
@@ -174,15 +194,21 @@ async function markAsUsed() {
         });
         
         const result = await response.json();
+        console.log('Mark as used result:', result);
         
         if(result.success) {
             document.getElementById('scanResult').innerHTML = `
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> QR Code otomatis ditandai sebagai digunakan setelah 30 detik.
-                    <p class="mb-0"><strong>Nilai:</strong> <span class="badge bg-warning">40</span></p>
+                    <h5><i class="bi bi-check-circle"></i> Timer 30 detik selesai!</h5>
+                    <p>QR Code otomatis ditandai sebagai digunakan.</p>
+                    <hr>
+                    <p class="mb-0 text-center"><i class="bi bi-arrow-repeat"></i> <strong>Silakan scan QR Code lain</strong></p>
                 </div>
             `;
-            loadQRList();
+            // Refresh list to show updated status
+            await loadQRList();
+        } else {
+            console.error('Failed to mark as used:', result.message);
         }
     } catch(error) {
         console.error('Mark used error:', error);

@@ -99,7 +99,7 @@
                             <h3 class="text-success">QR Code berhasil di-scan!</h3>
                             <p class="lead">Timer: <span id="timer" class="badge bg-info fs-4">30</span> detik</p>
                             <div class="progress" style="height: 30px;">
-                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">30s</div>
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 100%">30s</div>
                             </div>
                         </div>
                     </div>
